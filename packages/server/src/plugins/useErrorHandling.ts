@@ -1,5 +1,6 @@
 import { DefaultServerAdapterContext, ServerAdapterBaseObject } from '../types';
 import { Response as DefaultResponseCtor } from '@whatwg-node/fetch';
+import { ServerAdapterPlugin } from './types';
 
 export function createDefaultErrorHandler<TServerContext = DefaultServerAdapterContext>(
   ResponseCtor: typeof Response = DefaultResponseCtor
@@ -17,6 +18,25 @@ export type ErrorHandler<TServerContext> = (
   request: Request,
   ctx: TServerContext
 ) => Response | Promise<Response>;
+
+export function useErrorHandling<TServerContext>(
+  onError?: ErrorHandler<TServerContext>
+): ServerAdapterPlugin<TServerContext> {
+  return {
+    onRequest({ requestHandler, setRequestHandler, fetchAPI }) {
+      const errorHandler = onError || createDefaultErrorHandler<TServerContext>(fetchAPI.Response)
+      setRequestHandler(async function handlerWithErrorHandling(request: Request, serverContext: TServerContext): Promise<Response> {
+        try {
+          const response = await requestHandler(request, serverContext);
+          return response;
+        } catch(e) {
+          const response = await errorHandler(e, request, serverContext);
+          return response;
+        }
+      })
+    }
+  }
+}
 
 export function withErrorHandling<
   TServerContext = DefaultServerAdapterContext,
