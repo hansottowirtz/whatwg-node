@@ -27,7 +27,7 @@ export class PonyfillAbortSignal extends EventTarget implements AbortSignal {
     const abortEvent = new CustomEvent('abort', { detail: reason });
     this.dispatchEvent(abortEvent);
   }
-  
+
   static timeout(milliseconds: number): PonyfillAbortSignal {
     const signal = new PonyfillAbortSignal();
     setTimeout(() => signal.abort(`timeout in ${milliseconds} ms`), milliseconds);

@@ -40,7 +40,7 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
   return new Promise((resolve, reject) => {
     try {
       const url = new URL(fetchRequest.url, 'http://localhost');
-      
+
       if (url.protocol === 'data:') {
         const [mimeType = 'text/plain', ...datas] = url.pathname.split(',');
         const data = decodeURIComponent(datas.join(','));
@@ -63,7 +63,7 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
           headers: {
             'content-type': mimeType,
           },
-        })
+        });
         resolve(response);
         return;
       }

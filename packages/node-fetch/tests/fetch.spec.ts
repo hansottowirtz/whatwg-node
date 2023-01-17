@@ -127,7 +127,7 @@ describe('Node Fetch Ponyfill', () => {
         signal: PonyfillAbortSignal.timeout(300),
       })
     ).rejects.toThrow('The operation was aborted. reason: timeout');
-  })
+  });
   it('should respect file protocol', async () => {
     const response = await fetchPonyfill(pathToFileURL(join(__dirname, './fixtures/test.json')));
     expect(response.status).toBe(200);
@@ -159,5 +159,5 @@ describe('Node Fetch Ponyfill', () => {
       const text = await r.text();
       expect(text).toBe('Hello World!');
     });
-  })
+  });
 });
