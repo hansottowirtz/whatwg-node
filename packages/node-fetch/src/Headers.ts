@@ -1,3 +1,5 @@
+import { headerCase } from 'header-case';
+
 export type PonyfillHeadersInit = [string, string][] | Record<string, string | string[] | undefined> | Headers;
 
 export class PonyfillHeaders implements Headers {
@@ -34,7 +36,7 @@ export class PonyfillHeaders implements Headers {
   }
 
   append(name: string, value: string): void {
-    const key = name.toLowerCase();
+    const key = headerCase(name);
     if (this.map.has(key)) {
       value = this.map.get(key) + ', ' + value;
     }
@@ -42,22 +44,22 @@ export class PonyfillHeaders implements Headers {
   }
 
   get(name: string): string | null {
-    const key = name.toLowerCase();
+    const key = headerCase(name);
     return this.map.get(key) || null;
   }
 
   has(name: string): boolean {
-    const key = name.toLowerCase();
+    const key = headerCase(name);
     return this.map.has(key);
   }
 
   set(name: string, value: string): void {
-    const key = name.toLowerCase();
+    const key = headerCase(name);
     this.map.set(key, value);
   }
 
   delete(name: string): void {
-    const key = name.toLowerCase();
+    const key = headerCase(name);
     this.map.delete(key);
   }
 

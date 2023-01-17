@@ -12,7 +12,7 @@ export type RequestPonyfillInit = PonyfillBodyOptions &
     headers?: PonyfillHeadersInit;
   };
 
-export class PonyfillRequest extends PonyfillBody implements Request {
+export class PonyfillRequest<TJSON = any> extends PonyfillBody<TJSON> implements Request {
   constructor(input: RequestInfo | URL, options?: RequestPonyfillInit) {
     let url: string | undefined;
     let bodyInit: BodyPonyfillInit | null = null;

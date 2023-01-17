@@ -6,9 +6,10 @@ export type ResponsePonyfilInit = PonyfillBodyOptions &
     url?: string;
     redirected?: boolean;
     headers?: PonyfillHeadersInit;
+    type?: ResponseType;
   };
 
-export class PonyfillResponse extends PonyfillBody implements Response {
+export class PonyfillResponse<TJSON = any> extends PonyfillBody<TJSON> implements Response {
   constructor(body?: BodyPonyfillInit | null, init?: ResponsePonyfilInit) {
     super(body || null, init);
     if (init) {
@@ -17,6 +18,7 @@ export class PonyfillResponse extends PonyfillBody implements Response {
       this.statusText = init.statusText || 'OK';
       this.url = init.url || '';
       this.redirected = init.redirected || false;
+      this.type = init.type || 'default';
     }
   }
 
@@ -38,11 +40,10 @@ export class PonyfillResponse extends PonyfillBody implements Response {
   }
 
   static error() {
-    const response = new PonyfillResponse(null, {
+    return new PonyfillResponse(null, {
       status: 500,
       statusText: 'Internal Server Error',
     });
-    return response;
   }
 
   static redirect(url: string, status = 301) {
@@ -57,8 +58,8 @@ export class PonyfillResponse extends PonyfillBody implements Response {
     });
   }
 
-  static json(data: any, init: RequestInit = {}) {
-    return new PonyfillResponse(JSON.stringify(data), {
+  static json<T = any>(data: T, init: RequestInit = {}) {
+    return new PonyfillResponse<T>(JSON.stringify(data), {
       ...init,
       headers: {
         'Content-Type': 'application/json',

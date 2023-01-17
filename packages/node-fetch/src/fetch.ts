@@ -24,10 +24,10 @@ function getRequestFnForProtocol(protocol: string) {
   throw new Error(`Unsupported protocol: ${protocol}`);
 }
 
-export const fetchPonyfill = (
-  info: string | PonyfillRequest | URL,
+export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
+  info: string | PonyfillRequest<TRequestJSON> | URL,
   init?: RequestPonyfillInit
-): Promise<PonyfillResponse> => {
+): Promise<PonyfillResponse<TResponseJSON>> {
   if (typeof info === 'string' || info instanceof URL) {
     const ponyfillRequest = new PonyfillRequest(info, init);
     return fetchPonyfill(ponyfillRequest);
@@ -108,4 +108,4 @@ export const fetchPonyfill = (
       reject(e);
     }
   });
-};
+}

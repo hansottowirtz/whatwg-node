@@ -37,7 +37,7 @@ export interface PonyfillBodyOptions {
   formDataLimits?: FormDataLimits;
 }
 
-export class PonyfillBody implements Body {
+export class PonyfillBody<TJSON = any> implements Body {
   bodyUsed = false;
   private _body: PonyfillReadableStream<Uint8Array> | null = null;
   contentType: string | null = null;
@@ -164,7 +164,7 @@ export class PonyfillBody implements Body {
     });
   }
 
-  async json(): Promise<any> {
+  async json(): Promise<TJSON> {
     const text = await this.text();
     return JSON.parse(text);
   }
