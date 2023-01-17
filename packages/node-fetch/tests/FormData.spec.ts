@@ -8,7 +8,6 @@ describe('Form Data', () => {
     it('Consume empty URLSearchParams as PonyfillFormData', async () => {
         const res = new PonyfillResponse(new URLSearchParams());
         const fd = await res.formData();
-        console.log(fd);
 
         expect(fd).toBeInstanceOf(PonyfillFormData);
     });

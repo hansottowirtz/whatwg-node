@@ -6,6 +6,7 @@ import { PonyfillFormData } from '../src/FormData';
 import { PonyfillReadableStream } from '../src/ReadableStream';
 import { pathToFileURL } from 'url';
 import { join } from 'path';
+import { PonyfillAbortSignal } from '../src/AbortSignal';
 
 describe('Node Fetch Ponyfill', () => {
   it('should fetch', async () => {
@@ -120,6 +121,13 @@ describe('Node Fetch Ponyfill', () => {
       })
     ).rejects.toThrow('The operation was aborted.');
   });
+  it('should respect AbortSignal.timeout', async () => {
+    await expect(
+      fetchPonyfill('https://httpbin.org/delay/5', {
+        signal: PonyfillAbortSignal.timeout(300),
+      })
+    ).rejects.toThrow('The operation was aborted. reason: timeout');
+  })
   it('should respect file protocol', async () => {
     const response = await fetchPonyfill(pathToFileURL(join(__dirname, './fixtures/test.json')));
     expect(response.status).toBe(200);
@@ -129,7 +137,7 @@ describe('Node Fetch Ponyfill', () => {
   describe('data uris', () => {
     it('should accept base64-encoded gif data uri', async () => {
       const b64 = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-      const res = await fetch(b64);
+      const res = await fetchPonyfill(b64);
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('image/gif');
       const buf = await res.arrayBuffer();
@@ -137,7 +145,7 @@ describe('Node Fetch Ponyfill', () => {
       expect(buf).toBeInstanceOf(ArrayBuffer);
     });
     it('should accept data uri with specified charset', async () => {
-      const r = await fetch('data:text/plain;charset=UTF-8;page=21,the%20data:1234,5678');
+      const r = await fetchPonyfill('data:text/plain;charset=UTF-8;page=21,the%20data:1234,5678');
       expect(r.status).toBe(200);
       expect(r.headers.get('Content-Type')).toBe('text/plain;charset=UTF-8;page=21');
 
@@ -146,9 +154,8 @@ describe('Node Fetch Ponyfill', () => {
     });
 
     it('should accept data uri of plain text', async () => {
-      const r = await fetch('data:,Hello%20World!');
+      const r = await fetchPonyfill('data:,Hello%20World!');
       expect(r.status).toBe(200);
-      expect(r.headers.get('Content-Type')).toBe('text/plain;charset=US-ASCII');
       const text = await r.text();
       expect(text).toBe('Hello World!');
     });

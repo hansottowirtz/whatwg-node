@@ -1,6 +1,6 @@
 import { PonyfillAbortError } from './AbortError';
 // Will be removed after v14 reaches EOL
-import { EventTarget } from '@whatwg-node/events';
+import { EventTarget, CustomEvent } from '@whatwg-node/events';
 
 export class PonyfillAbortSignal extends EventTarget implements AbortSignal {
   aborted = false;
@@ -24,12 +24,13 @@ export class PonyfillAbortSignal extends EventTarget implements AbortSignal {
   }
 
   abort(reason?: any): void {
-    this.dispatchEvent(new CustomEvent('abort', { detail: reason }));
+    const abortEvent = new CustomEvent('abort', { detail: reason });
+    this.dispatchEvent(abortEvent);
   }
   
   static timeout(milliseconds: number): PonyfillAbortSignal {
     const signal = new PonyfillAbortSignal();
-    setTimeout(() => signal.abort(`Operation timed out`), milliseconds);
+    setTimeout(() => signal.abort(`timeout in ${milliseconds} ms`), milliseconds);
     return signal;
   }
 }

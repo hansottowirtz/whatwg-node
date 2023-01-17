@@ -24,6 +24,8 @@ function getRequestFnForProtocol(protocol: string) {
   throw new Error(`Unsupported protocol: ${protocol}`);
 }
 
+const BASE64_SUFFIX = ';base64';
+
 export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
   info: string | PonyfillRequest<TRequestJSON> | URL,
   init?: RequestPonyfillInit
@@ -40,30 +42,30 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
       const url = new URL(fetchRequest.url, 'http://localhost');
       
       if (url.protocol === 'data:') {
-        const [mimeType = 'text/plain', base64FlagOrText, base64String] = url.pathname.split(',');
-        if (base64FlagOrText === 'base64' && base64String) {
-          const buffer = Buffer.from(base64String, 'base64');
+        const [mimeType = 'text/plain', ...datas] = url.pathname.split(',');
+        const data = decodeURIComponent(datas.join(','));
+        if (mimeType.endsWith(BASE64_SUFFIX)) {
+          const buffer = Buffer.from(data, 'base64');
+          const realMimeType = mimeType.slice(0, -BASE64_SUFFIX.length);
           const response = new PonyfillResponse(buffer, {
             status: 200,
             statusText: 'OK',
             headers: {
-              'content-type': mimeType,
+              'content-type': realMimeType,
             },
           });
           resolve(response);
           return;
         }
-        if (base64FlagOrText) {
-          const response = new PonyfillResponse(base64FlagOrText, {
-            status: 200,
-            statusText: 'OK',
-            headers: {
-              'content-type': mimeType,
-            },
-          });
-          resolve(response);
-          return;
-        }
+        const response = new PonyfillResponse(data, {
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            'content-type': mimeType,
+          },
+        })
+        resolve(response);
+        return;
       }
 
       if (url.protocol === 'file:') {
@@ -84,12 +86,8 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
 
       const abortListener: EventListener = function abortListener(event: Event) {
         nodeRequest.destroy();
-        const reason =  (event as CustomEvent).detail;
-        if (reason instanceof Error) {
-          reject(reason)
-        } else {
-          reject(new PonyfillAbortError(reason));
-        }
+        const reason = (event as CustomEvent).detail;
+        reject(new PonyfillAbortError(reason));
       };
 
       fetchRequest.signal.addEventListener('abort', abortListener);

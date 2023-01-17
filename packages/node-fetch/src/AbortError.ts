@@ -1,7 +1,11 @@
 // Will be removed after v14 reaches EOL
 export class PonyfillAbortError extends Error {
   constructor(reason?: any) {
-    super('The operation was aborted' + reason || '', {
+    let message = 'The operation was aborted.';
+    if (reason) {
+      message += ` reason: ${reason}`;
+    }
+    super(message, {
       cause: reason,
     });
     this.name = 'AbortError';
