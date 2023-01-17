@@ -3,7 +3,6 @@ module.exports.Headers = globalThis.Headers;
 module.exports.Request = globalThis.Request;
 module.exports.Response = globalThis.Response;
 module.exports.FormData = globalThis.FormData;
-module.exports.AbortError = globalThis.AbortError;
 module.exports.AbortSignal = globalThis.AbortSignal;
 module.exports.AbortController = globalThis.AbortController;
 module.exports.ReadableStream = globalThis.ReadableStream;

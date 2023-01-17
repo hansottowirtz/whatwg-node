@@ -37,7 +37,6 @@ module.exports = function createNodePonyfill(opts = {}) {
   ponyfills.btoa = newNodeFetch.btoa;
   ponyfills.TextEncoder = newNodeFetch.TextEncoder;
   ponyfills.TextDecoder = newNodeFetch.TextDecoder;
-  ponyfills.AbortError = newNodeFetch.AbortError;
   ponyfills.AbortSignal = newNodeFetch.AbortSignal;
 
   if (opts.formDataLimits) {
