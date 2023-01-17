@@ -82,6 +82,9 @@ export class PonyfillFormData implements FormData {
           } else {
             controller.enqueue(Buffer.from(`\r\n--${boundary}\r\n`));
           }
+        } else {
+          controller.enqueue(Buffer.from(`\r\n--${boundary}--\r\n`));
+          controller.close();
         }
       },
     });

@@ -263,6 +263,39 @@ function processBodyInit(bodyInit: BodyPonyfillInit | null): {
       body,
     };
   }
+  if ('stream' in bodyInit) {
+    const bodyStream = bodyInit.stream();
+    const body = new PonyfillReadableStream<Uint8Array>(bodyStream);
+    return {
+      contentType: bodyInit.type,
+      contentLength: bodyInit.size,
+      body,
+    };
+  }
+  if (bodyInit instanceof URLSearchParams) {
+    const contentType = 'application/x-www-form-urlencoded;charset=UTF-8';
+    const body = new PonyfillReadableStream<Uint8Array>(Readable.from(bodyInit.toString()));
+    return {
+      bodyType: BodyInitType.String,
+      contentType,
+      contentLength: null,
+      body,
+    };
+  }
+  if ('forEach' in bodyInit) {
+    const formData = new PonyfillFormData();
+    bodyInit.forEach((value, key) => {
+      formData.append(key, value);
+    });
+    const boundary = Math.random().toString(36).substr(2);
+    const contentType = `multipart/form-data; boundary=${boundary}`;
+    const body = formData.stream(boundary);
+    return {
+      contentType,
+      contentLength: null,
+      body,
+    };
+  }
 
   throw new Error('Unknown body type');
 }

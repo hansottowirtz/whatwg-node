@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 
-function getResponseForFile(url: string) {
+function getResponseForFile(url: URL) {
   const path = fileURLToPath(url);
   const readable = createReadStream(path);
   return new PonyfillResponse(readable);
@@ -16,9 +16,9 @@ function getResponseForFile(url: string) {
 
 function getRequestFnForProtocol(protocol: string) {
   switch (protocol) {
-    case 'http':
+    case 'http:':
       return httpRequest;
-    case 'https':
+    case 'https:':
       return httpsRequest;
   }
   throw new Error(`Unsupported protocol: ${protocol}`);
@@ -37,13 +37,41 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
 
   return new Promise((resolve, reject) => {
     try {
-      const protocol = fetchRequest.url.split('://')[0];
-      if (protocol === 'file') {
-        const response = getResponseForFile(fetchRequest.url);
+      const url = new URL(fetchRequest.url, 'http://localhost');
+      
+      if (url.protocol === 'data:') {
+        const [mimeType = 'text/plain', base64FlagOrText, base64String] = url.pathname.split(',');
+        if (base64FlagOrText === 'base64' && base64String) {
+          const buffer = Buffer.from(base64String, 'base64');
+          const response = new PonyfillResponse(buffer, {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'content-type': mimeType,
+            },
+          });
+          resolve(response);
+          return;
+        }
+        if (base64FlagOrText) {
+          const response = new PonyfillResponse(base64FlagOrText, {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'content-type': mimeType,
+            },
+          });
+          resolve(response);
+          return;
+        }
+      }
+
+      if (url.protocol === 'file:') {
+        const response = getResponseForFile(url);
         resolve(response);
         return;
       }
-      const requestFn = getRequestFnForProtocol(protocol);
+      const requestFn = getRequestFnForProtocol(url.protocol);
 
       const nodeReadable = (
         fetchRequest.body != null
@@ -56,12 +84,17 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
 
       const abortListener: EventListener = function abortListener(event: Event) {
         nodeRequest.destroy();
-        reject(new PonyfillAbortError((event as CustomEvent).detail));
+        const reason =  (event as CustomEvent).detail;
+        if (reason instanceof Error) {
+          reject(reason)
+        } else {
+          reject(new PonyfillAbortError(reason));
+        }
       };
 
       fetchRequest.signal.addEventListener('abort', abortListener);
 
-      const nodeRequest = requestFn(fetchRequest.url, {
+      const nodeRequest = requestFn(url, {
         // signal: fetchRequest.signal will be added when v14 reaches EOL
         method: fetchRequest.method,
         headers: nodeHeaders,
@@ -76,7 +109,7 @@ export function fetchPonyfill<TResponseJSON = any, TRequestJSON = any>(
             return;
           }
           if (fetchRequest.redirect === 'follow') {
-            const redirectedUrl = new URL(nodeResponse.headers.location, fetchRequest.url);
+            const redirectedUrl = new URL(nodeResponse.headers.location, url);
             const redirectResponse$ = fetchPonyfill(redirectedUrl, info);
             resolve(
               redirectResponse$.then(redirectResponse => {

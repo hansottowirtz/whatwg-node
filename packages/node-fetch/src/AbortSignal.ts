@@ -22,4 +22,14 @@ export class PonyfillAbortSignal extends EventTarget implements AbortSignal {
     }
     this.addEventListener('abort', value);
   }
+
+  abort(reason?: any): void {
+    this.dispatchEvent(new CustomEvent('abort', { detail: reason }));
+  }
+  
+  static timeout(milliseconds: number): PonyfillAbortSignal {
+    const signal = new PonyfillAbortSignal();
+    setTimeout(() => signal.abort(`Operation timed out`), milliseconds);
+    return signal;
+  }
 }
